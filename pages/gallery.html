@@ -103,16 +103,12 @@
         <div class="section-top-border">
           <h3>Images</h3>
           <div class="row gallery-item">
-            @foreach($pictures as $picture)
             <div class="col-md-4">
-              <a href="{{asset('storage/gallery/'.$picture->meta_value)}}" class="img-pop-up">
-                <div class="single-gallery-image" style="background: url({{asset('storage/gallery/'.$picture->meta_value)}});"></div>
+              <a href="../img/ambaza.jpg" class="img-pop-up">
+                <div class="single-gallery-image" style="background: url('../img/ambaza.jpg');"></div>
               </a>
             </div>
-            @endforeach
           </div>
-          <br>
-          {{$pictures->links()}}
         </div>
     </div>
   </main>
