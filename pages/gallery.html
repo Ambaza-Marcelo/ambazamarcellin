@@ -67,9 +67,55 @@
     </header>
     <main>
 
-
-
-    </main>
+    <!-- Hero Start -->
+    <div class="slider-area ">
+      <div class="slider-height2 d-flex align-items-center">
+        <div class="container">
+          <div class="row">
+            <div class="col-xl-12">
+              <div class="hero-cap">
+                <h2>Ambaza</h2>
+                <nav aria-label="breadcrumb ">
+                  <ol class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="index.html">Accueil</a></li>
+                  <li class="breadcrumb-item"><a href="#">Ambaza</a></li> 
+                  </ol>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+   
+    <div class="whole-wrap">
+        <div class="section-top-border">
+          <h3 class="mb-30">Citation</h3>
+          <div class="row">
+            <div class="col-lg-12">
+              <blockquote class="generic-blockquote">
+                La compagnie de ma famille suffit amplement à mon bonheur et la modestie chaleureuse des petits logis en bois me convient d'avantage que la prétention des palais. Laisser couler les jours me semble être une occupation idéale, parce qu'essentielle.
+              </blockquote>
+            </div>
+          </div>
+        </div>
+        <div class="section-top-border">
+          <h3>Images</h3>
+          <div class="row gallery-item">
+            @foreach($pictures as $picture)
+            <div class="col-md-4">
+              <a href="{{asset('storage/gallery/'.$picture->meta_value)}}" class="img-pop-up">
+                <div class="single-gallery-image" style="background: url({{asset('storage/gallery/'.$picture->meta_value)}});"></div>
+              </a>
+            </div>
+            @endforeach
+          </div>
+          <br>
+          {{$pictures->links()}}
+        </div>
+    </div>
+  </main>
     <footer>
         <div class="footer-area">
             <div class="container">
