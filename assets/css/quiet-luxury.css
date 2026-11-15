@@ -353,10 +353,6 @@ h2 {
     gap: 18px;
 }
 
-.quotes {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 .card {
     position: relative;
     padding: 32px 28px 30px;
@@ -451,34 +447,6 @@ h2 {
 
 .markers p + p {
     border-left: 1px solid var(--line);
-}
-
-.avatar {
-    display: grid;
-    place-items: center;
-    width: 46px;
-    height: 46px;
-    margin: 0 0 22px;
-    border: 1px solid rgba(212, 175, 55, 0.45);
-    color: var(--gold);
-    font-size: 0.72rem;
-    letter-spacing: 0.12em;
-}
-
-.role {
-    margin: 6px 0 16px;
-    color: var(--gold);
-    font-size: 0.75rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.quote p:last-child {
-    font-family: var(--serif);
-    font-size: 1.15rem;
-    font-style: italic;
-    line-height: 1.55;
-    color: var(--gold-bright);
 }
 
 .post {
@@ -669,7 +637,6 @@ html.js .reveal.is-visible {
     }
 
     .card-grid,
-    .quotes,
     .markers {
         grid-template-columns: 1fr;
     }
