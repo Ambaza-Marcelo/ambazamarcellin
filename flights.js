@@ -1,12 +1,37 @@
-/* Suivi public des vols autour du Burundi.
-   Aucune clé, aucun serveur : les deux sources sont appelées depuis le navigateur.
+/* Suivi public des vols au-dessus du Burundi et des pays voisins.
+   Aucune clé, aucun serveur : les sources passent par le proxy Netlify.
    Les textes vivent dans TEXTS (fr, en, rn) pour une traduction ultérieure. */
 (function () {
-    var ADSB_URL = "/api/adsb/v2/point/-3.38/29.92/250";
-    var OPENSKY_URL = "/api/opensky/states/all?lamin=-4.6&lomin=28.8&lamax=-2.2&lomax=31.0";
+    var ADSB_ZONES = [
+        "/api/adsb/v2/point/-3.38/29.92/250",
+        "/api/adsb/v2/point/-1.95/30.06/150",
+        "/api/adsb/v2/point/-2.5/28.86/200",
+        "/api/adsb/v2/point/-3.4/36.7/200",
+        "/api/adsb/v2/point/-6.8/39.2/200",
+        "/api/adsb/v2/point/-6.17/35.74/200"
+    ];
+    var OPENSKY_URL = "/api/opensky/states/all?lamin=-12&lomin=26&lamax=1&lomax=41";
     var CACHE_KEY = "am-flights-cache";
     var REFRESH_MS = 60000;
-    var GEOJSON_URL = "data/burundi.geojson";
+    var GEOJSON_URL = "data/region.geojson";
+    var COUNTRY_IDS = ["bdi", "rwa", "tza", "cod"];
+    var FILTERS = ["all", "bdi", "rwa", "tza", "cod"];
+    var FLAGS = { bdi: "🇧🇮", rwa: "🇷🇼", tza: "🇹🇿", cod: "🇨🇩" };
+    var SORT = { bdi: 0, rwa: 1, tza: 2, cod: 3, region: 4 };
+    var DRAW = { cod: 0, tza: 1, rwa: 2, bdi: 3 };
+    var STYLES = {
+        bdi: { color: "#F8E7B0", weight: 2.6, fillColor: "#D4AF37", fillOpacity: 0.42 },
+        rwa: { color: "#7DCEA0", weight: 1.6, fillColor: "#7DCEA0", fillOpacity: 0.18 },
+        tza: { color: "#5DADE2", weight: 1.6, fillColor: "#5DADE2", fillOpacity: 0.14 },
+        cod: { color: "#E59866", weight: 1.6, fillColor: "#E59866", fillOpacity: 0.1 }
+    };
+    var PLANE_COLORS = {
+        bdi: "#F8E7B0",
+        rwa: "#7DCEA0",
+        tza: "#5DADE2",
+        cod: "#E59866",
+        region: "#8C7340"
+    };
 
     /* Indicatifs OACI. ASKY vole sous SKK, Brussels sous BEL,
        Air Côte d'Ivoire sous VRE : ces alias évitent une compagnie vide. */
@@ -24,7 +49,13 @@
         BEL: "Brussels Airlines",
         TCV: "Air Côte d'Ivoire",
         VRE: "Air Côte d'Ivoire",
-        SAA: "South African Airways"
+        SAA: "South African Airways",
+        PRF: "Precision Air",
+        CAA: "Compagnie Africaine d'Aviation",
+        KDC: "Congo Airways",
+        TCH: "Tanzanian Government Flight",
+        AUZ: "Auric Air",
+        FTZ: "Fastjet"
     };
 
     var TYPES = {
@@ -52,27 +83,30 @@
         fr: {
             kicker: "Ciel en direct",
             title: "Avions au-dessus du Burundi",
-            intro: "Les appareils détectés au-dessus du pays et dans ses environs. Le ciel se rafraîchit chaque minute.",
+            intro: "Le ciel du Burundi, du Rwanda, de la Tanzanie et de l'est de la RDC. Il se rafraîchit chaque minute.",
             refresh: "Actualiser",
             refreshing: "Actualisation…",
-            countOne: "{n} avion détecté · mis à jour à {time} (heure de Bujumbura)",
-            countMany: "{n} avions détectés · mis à jour à {time} (heure de Bujumbura)",
-            empty: "Aucun avion détecté pour le moment, la couverture radar au-dessus du Burundi est encore limitée. Revenez plus tard !",
+            countOne: "{n} avion dans la région, dont {y} au-dessus du Burundi · mis à jour à {time} (heure de Bujumbura)",
+            countMany: "{n} avions dans la région, dont {y} au-dessus du Burundi · mis à jour à {time} (heure de Bujumbura)",
+            empty: "Aucun avion détecté pour le moment dans la région. Revenez plus tard !",
+            emptyCountry: "Aucun avion détecté pour le moment au-dessus de ce pays.",
             error: "Impossible de joindre les services de suivi pour le moment. Les données en direct sont temporairement inaccessibles.",
             cached: "Affichage de la dernière mise à jour enregistrée sur cet appareil.",
-            loading: "Recherche des avions au-dessus du Burundi…",
+            loading: "Recherche des avions dans la région…",
             mapLoading: "La carte se charge…",
             mapError: "La carte n'a pas pu être chargée. La liste des vols reste disponible.",
-            over: "Au-dessus du Burundi",
-            near: "À proximité",
-            legendOver: "Au-dessus du Burundi",
-            legendNear: "À proximité",
+            filterAll: "Tous",
+            bdi: "Burundi",
+            rwa: "Rwanda",
+            tza: "Tanzanie",
+            cod: "RDC",
+            region: "Région",
+            country: "Pays survolé",
             airline: "Compagnie",
             callsign: "Indicatif",
             type: "Type",
             altitude: "Altitude",
             speed: "Vitesse",
-            zone: "Zone",
             unknownAirline: "Non identifiée",
             unknownValue: "—",
             meters: "{n} m",
@@ -83,27 +117,30 @@
         en: {
             kicker: "Live sky",
             title: "Aircraft over Burundi",
-            intro: "Aircraft detected over the country and nearby. The sky refreshes every minute.",
+            intro: "The sky over Burundi, Rwanda, Tanzania and eastern DRC. It refreshes every minute.",
             refresh: "Refresh",
             refreshing: "Refreshing…",
-            countOne: "{n} aircraft detected · updated at {time} (Bujumbura time)",
-            countMany: "{n} aircraft detected · updated at {time} (Bujumbura time)",
-            empty: "No aircraft detected right now. Radar coverage over Burundi is still limited. Come back a little later!",
+            countOne: "{n} aircraft in the region, including {y} over Burundi · updated at {time} (Bujumbura time)",
+            countMany: "{n} aircraft in the region, including {y} over Burundi · updated at {time} (Bujumbura time)",
+            empty: "No aircraft detected in the region right now. Come back a little later!",
+            emptyCountry: "No aircraft detected over this country right now.",
             error: "The flight services could not be reached. Live data is temporarily unavailable.",
             cached: "Showing the last update saved on this device.",
-            loading: "Looking for aircraft over Burundi…",
+            loading: "Looking for aircraft in the region…",
             mapLoading: "The map is loading…",
             mapError: "The map could not be loaded. The flight list is still available.",
-            over: "Over Burundi",
-            near: "Nearby",
-            legendOver: "Over Burundi",
-            legendNear: "Nearby",
+            filterAll: "All",
+            bdi: "Burundi",
+            rwa: "Rwanda",
+            tza: "Tanzania",
+            cod: "DRC",
+            region: "Region",
+            country: "Country overflown",
             airline: "Airline",
             callsign: "Callsign",
             type: "Type",
             altitude: "Altitude",
             speed: "Speed",
-            zone: "Zone",
             unknownAirline: "Unidentified",
             unknownValue: "—",
             meters: "{n} m",
@@ -119,7 +156,8 @@
     if (!root) return;
 
     var lang = "fr";
-    var rings = [];
+    var filter = "all";
+    var countryRings = { bdi: [], rwa: [], tza: [], cod: [] };
     var map = null;
     var planeLayer = null;
     var started = false;
@@ -128,6 +166,7 @@
     var leafletPromise = null;
     var latestPlanes = [];
     var latestAt = null;
+    var latestNotice = "";
 
     var countEl = root.querySelector("[data-flights-count]");
     var boardEl = root.querySelector("[data-flights-board]");
@@ -206,19 +245,25 @@
         return inside;
     }
 
-    function isOverBurundi(lat, lon) {
-        for (var i = 0; i < rings.length; i += 1) {
-            if (ringContains(rings[i], lon, lat)) return true;
+    function addRings(id, geometry) {
+        if (!geometry || !countryRings[id]) return;
+        if (geometry.type === "Polygon") countryRings[id].push(geometry.coordinates[0]);
+        if (geometry.type === "MultiPolygon") {
+            geometry.coordinates.forEach(function (polygon) {
+                countryRings[id].push(polygon[0]);
+            });
         }
-        return false;
     }
 
-    function collectRings(geometry) {
-        if (!geometry) return;
-        if (geometry.type === "Polygon") rings.push(geometry.coordinates[0]);
-        if (geometry.type === "MultiPolygon") {
-            geometry.coordinates.forEach(function (polygon) { rings.push(polygon[0]); });
+    function countryAt(lat, lon) {
+        var order = ["bdi", "rwa", "cod", "tza"];
+        for (var i = 0; i < order.length; i += 1) {
+            var rings = countryRings[order[i]];
+            for (var j = 0; j < rings.length; j += 1) {
+                if (ringContains(rings[j], lon, lat)) return order[i];
+            }
         }
+        return "region";
     }
 
     function numberOrNull(value) {
@@ -240,6 +285,7 @@
         var knots = numberOrNull(item.gs);
         var track = numberOrNull(item.track);
         return {
+            hex: String(item.hex || "").toLowerCase(),
             callsign: callsign,
             type: typeName(item.t),
             airline: airlineFrom(callsign),
@@ -263,6 +309,7 @@
             var metersPerSecond = numberOrNull(state[9]);
             var track = numberOrNull(state[10]);
             return {
+                hex: String(state[0] || "").toLowerCase(),
                 callsign: callsign,
                 type: "",
                 airline: airlineFrom(callsign),
@@ -275,15 +322,48 @@
         }).filter(Boolean);
     }
 
+    function mergePlanes(groups) {
+        var seen = {};
+        var out = [];
+        groups.forEach(function (group) {
+            group.forEach(function (plane) {
+                var key = plane.hex || (plane.callsign + "@" + plane.lat.toFixed(3) + "," + plane.lon.toFixed(3));
+                if (seen[key]) return;
+                seen[key] = true;
+                out.push(plane);
+            });
+        });
+        return out;
+    }
+
     function tagZones(planes) {
         planes.forEach(function (plane) {
-            plane.over = isOverBurundi(plane.lat, plane.lon);
+            plane.country = countryAt(plane.lat, plane.lon);
+            plane.over = plane.country === "bdi";
         });
         planes.sort(function (a, b) {
-            if (a.over !== b.over) return a.over ? -1 : 1;
+            var left = SORT[a.country];
+            var right = SORT[b.country];
+            if (left == null) left = 4;
+            if (right == null) right = 4;
+            if (left !== right) return left - right;
             return String(a.callsign).localeCompare(String(b.callsign));
         });
         return planes;
+    }
+
+    function visiblePlanes(planes) {
+        if (filter === "all") return planes;
+        return planes.filter(function (plane) { return plane.country === filter; });
+    }
+
+    function countOf(planes, id) {
+        if (id === "all") return planes.length;
+        var total = 0;
+        planes.forEach(function (plane) {
+            if (plane.country === id) total += 1;
+        });
+        return total;
     }
 
     function readCache() {
@@ -312,25 +392,44 @@
 
     function fetchJson(url) {
         var controller = typeof AbortController === "function" ? new AbortController() : null;
-        var timer = setTimeout(function () {
+        var timeout = setTimeout(function () {
             if (controller) controller.abort();
         }, 12000);
         return fetch(url, controller ? { signal: controller.signal } : undefined).then(function (response) {
             if (!response.ok) throw new Error("HTTP " + response.status);
             return response.json();
         }).finally(function () {
-            clearTimeout(timer);
+            clearTimeout(timeout);
         });
     }
 
-    /* adsb.lol d'abord. OpenSky seulement si la première source échoue vraiment. */
-    function loadLive() {
-        return fetchJson(ADSB_URL).then(function (payload) {
-            return { source: "adsb.lol", planes: tagZones(fromAdsb(payload)) };
-        }).catch(function () {
-            return fetchJson(OPENSKY_URL).then(function (payload) {
-                return { source: "opensky", planes: tagZones(fromOpenSky(payload)) };
+    function settle(promises) {
+        if (typeof Promise.allSettled === "function") return Promise.allSettled(promises);
+        return Promise.all(promises.map(function (promise) {
+            return Promise.resolve(promise).then(function (value) {
+                return { status: "fulfilled", value: value };
+            }, function (reason) {
+                return { status: "rejected", reason: reason };
             });
+        }));
+    }
+
+    /* Les six zones partent ensemble. OpenSky ne sert que si elles échouent toutes. */
+    function loadLive() {
+        return settle(ADSB_ZONES.map(fetchJson)).then(function (results) {
+            var groups = [];
+            var any = false;
+            results.forEach(function (result) {
+                if (result.status !== "fulfilled") return;
+                any = true;
+                groups.push(fromAdsb(result.value));
+            });
+            if (!any) {
+                return fetchJson(OPENSKY_URL).then(function (payload) {
+                    return { source: "opensky", planes: fromOpenSky(payload) };
+                });
+            }
+            return { source: "adsb.lol", planes: mergePlanes(groups) };
         });
     }
 
@@ -339,8 +438,13 @@
         return fill(template, { n: Number(value).toLocaleString(lang === "en" ? "en-GB" : "fr-FR") });
     }
 
+    function countryLabel(id) {
+        var name = t(id || "region");
+        return FLAGS[id] ? FLAGS[id] + " " + name : name;
+    }
+
     function planeIcon(plane) {
-        var fill = plane.over ? "#F8E7B0" : "#8C7340";
+        var fill = PLANE_COLORS[plane.country] || PLANE_COLORS.region;
         var svg = '<svg viewBox="0 0 24 24" width="26" height="26" style="transform:rotate(' + plane.track + 'deg)">' +
             '<path fill="' + fill + '" stroke="#1A1408" stroke-width="0.6" d="M12 1.6 14.1 9.8 21.2 12.4v1.7L14 12.6 13.2 19.4 15.2 20.8v1.1L12 21.1 8.8 21.9v-1.1l2-1.4L10 12.6 2.8 14.1v-1.7L9.9 9.8 12 1.6Z"/>' +
             "</svg>";
@@ -355,6 +459,7 @@
 
     function popupHtml(plane) {
         var rows = [
+            [t("country"), countryLabel(plane.country)],
             [t("airline"), plane.airline || t("unknownAirline")],
             [t("callsign"), plane.callsign || t("unknownValue")],
             [t("type"), plane.type || t("unknownValue")],
@@ -376,51 +481,87 @@
         });
     }
 
+    function renderLegend() {
+        var legend = root.querySelector(".flights-legend");
+        if (!legend) return;
+        legend.innerHTML = COUNTRY_IDS.map(function (id) {
+            return '<span><i data-swatch="' + id + '" aria-hidden="true"></i>' + escapeHtml(t(id)) + "</span>";
+        }).join("");
+    }
+
+    function filtersEl() {
+        var el = root.querySelector("[data-flights-filters]");
+        if (el || !boardEl) return el;
+        el = document.createElement("div");
+        el.className = "flights-filters";
+        el.setAttribute("data-flights-filters", "");
+        el.setAttribute("role", "tablist");
+        boardEl.parentNode.insertBefore(el, boardEl);
+        return el;
+    }
+
+    function renderFilters(planes) {
+        var el = filtersEl();
+        if (!el) return;
+        el.innerHTML = FILTERS.map(function (id) {
+            var name = id === "all" ? t("filterAll") : t(id);
+            var active = filter === id;
+            return '<button type="button" role="tab" data-filter="' + id + '" aria-selected="' +
+                (active ? "true" : "false") + '" class="' + (active ? "is-active" : "") + '">' +
+                escapeHtml(name + " (" + countOf(planes, id) + ")") + "</button>";
+        }).join("");
+    }
+
     function renderBoard(planes) {
         if (!planes.length) {
-            boardEl.innerHTML = '<p class="flights-status">' + escapeHtml(t("empty")) + "</p>";
+            var message = filter === "all" ? t("empty") : t("emptyCountry");
+            boardEl.innerHTML = '<p class="flights-status">' + escapeHtml(message) + "</p>";
             return;
         }
-        var head = "<thead><tr>" +
-            "<th>" + escapeHtml(t("airline")) + "</th>" +
-            "<th>" + escapeHtml(t("callsign")) + "</th>" +
-            "<th>" + escapeHtml(t("type")) + "</th>" +
-            "<th>" + escapeHtml(t("altitude")) + "</th>" +
-            "<th>" + escapeHtml(t("speed")) + "</th>" +
-            "<th>" + escapeHtml(t("zone")) + "</th>" +
-            "</tr></thead>";
+        var labels = [t("country"), t("airline"), t("callsign"), t("type"), t("altitude"), t("speed")];
+        var head = "<thead><tr>" + labels.map(function (label) {
+            return "<th>" + escapeHtml(label) + "</th>";
+        }).join("") + "</tr></thead>";
         var body = planes.map(function (plane) {
-            var zone = plane.over ? t("over") : t("near");
-            var badge = '<span class="flights-badge' + (plane.over ? " is-over" : "") + '">' + escapeHtml(zone) + "</span>";
-            var cells = [
-                plane.airline || t("unknownAirline"),
-                plane.callsign || t("unknownValue"),
-                plane.type || t("unknownValue"),
-                formatMeasure(t("meters"), plane.altM),
-                formatMeasure(t("kmh"), plane.speedKmh)
+            var country = '<span class="flights-badge' + (plane.country === "bdi" ? " is-over" : "") + '">' +
+                escapeHtml(countryLabel(plane.country)) + "</span>";
+            var values = [
+                country,
+                escapeHtml(plane.airline || t("unknownAirline")),
+                escapeHtml(plane.callsign || t("unknownValue")),
+                escapeHtml(plane.type || t("unknownValue")),
+                escapeHtml(formatMeasure(t("meters"), plane.altM)),
+                escapeHtml(formatMeasure(t("kmh"), plane.speedKmh))
             ];
-            var labels = [t("airline"), t("callsign"), t("type"), t("altitude"), t("speed"), t("zone")];
-            var html = cells.map(function (value, index) {
-                return '<td data-label="' + escapeHtml(labels[index]) + '">' + escapeHtml(value) + "</td>";
-            }).join("");
-            return "<tr>" + html + '<td data-label="' + escapeHtml(t("zone")) + '">' + badge + "</td></tr>";
+            return "<tr>" + values.map(function (value, index) {
+                return '<td data-label="' + escapeHtml(labels[index]) + '">' + value + "</td>";
+            }).join("") + "</tr>";
         }).join("");
         boardEl.innerHTML = '<div class="flights-table-wrap"><table class="flights-table">' + head + "<tbody>" + body + "</tbody></table></div>";
     }
 
-    function renderCount(count, date) {
-        var key = count > 1 ? "countMany" : "countOne";
-        countEl.textContent = fill(t(key), { n: count, time: bujumburaTime(date) });
+    function renderCount(planes, date) {
+        var key = planes.length > 1 ? "countMany" : "countOne";
+        countEl.textContent = fill(t(key), {
+            n: planes.length,
+            y: countOf(planes, "bdi"),
+            time: bujumburaTime(date)
+        });
     }
 
     function render(planes, date, notice) {
+        tagZones(planes);
         latestPlanes = planes;
         latestAt = date;
-        renderCount(planes.length, date);
-        renderBoard(planes);
-        drawPlanes(planes);
-        if (notice) {
-            boardEl.insertAdjacentHTML("afterbegin", '<p class="flights-status is-error">' + escapeHtml(notice) + "</p>");
+        latestNotice = notice || "";
+        renderLegend();
+        renderCount(planes, date);
+        renderFilters(planes);
+        var shown = visiblePlanes(planes);
+        renderBoard(shown);
+        drawPlanes(shown);
+        if (latestNotice) {
+            boardEl.insertAdjacentHTML("afterbegin", '<p class="flights-status is-error">' + escapeHtml(latestNotice) + "</p>");
         }
     }
 
@@ -432,12 +573,10 @@
         if (creditEl) creditEl.textContent = t("credit");
         if (mapEl) mapEl.setAttribute("aria-label", t("title"));
         if (mapNote && !map) mapNote.textContent = t("mapLoading");
-        var legendOver = root.querySelector("[data-flights-legend-over]");
-        var legendNear = root.querySelector("[data-flights-legend-near]");
-        if (legendOver) legendOver.textContent = t("legendOver");
-        if (legendNear) legendNear.textContent = t("legendNear");
+        renderLegend();
         if (document.body.hasAttribute("data-flights-page")) document.title = t("pageTitle");
-        if (latestAt) render(tagZones(latestPlanes), latestAt);
+        if (latestAt) render(latestPlanes, latestAt, latestNotice);
+        else if (countEl) countEl.textContent = t("loading");
     }
 
     function setLang(next) {
@@ -474,7 +613,7 @@
 
     function initMap() {
         if (map || !mapEl || !window.L) return;
-        map = window.L.map(mapEl, { scrollWheelZoom: false, zoomControl: true }).setView([-3.38, 29.92], 7);
+        map = window.L.map(mapEl, { scrollWheelZoom: false, zoomControl: true }).setView([-5.5, 33.5], 5);
         window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 16,
             attribution: "&copy; OpenStreetMap"
@@ -482,23 +621,34 @@
         planeLayer = window.L.layerGroup().addTo(map);
         mapEl.classList.add("is-ready");
         if (mapNote) mapNote.hidden = true;
-        drawPlanes(latestPlanes);
+        drawPlanes(visiblePlanes(latestPlanes));
         fetch(GEOJSON_URL).then(function (response) {
             if (!response.ok) throw new Error("geojson");
             return response.json();
         }).then(function (geo) {
-            (geo.features || []).forEach(function (feature) { collectRings(feature.geometry); });
-            window.L.geoJSON(geo, {
-                style: { color: "#F8E7B0", weight: 2, fillColor: "#D4AF37", fillOpacity: 0.28 }
+            var features = (geo.features || []).slice().sort(function (a, b) {
+                var left = DRAW[(a.properties && a.properties.id) || ""] || 0;
+                var right = DRAW[(b.properties && b.properties.id) || ""] || 0;
+                return left - right;
+            });
+            features.forEach(function (feature) {
+                addRings(feature.properties && feature.properties.id, feature.geometry);
+            });
+            window.L.geoJSON({ type: "FeatureCollection", features: features }, {
+                style: function (feature) {
+                    var id = feature.properties && feature.properties.id;
+                    return STYLES[id] || STYLES.cod;
+                }
             }).addTo(map);
-            if (latestPlanes.length) {
-                tagZones(latestPlanes);
-                renderBoard(latestPlanes);
-                drawPlanes(latestPlanes);
+            function frameMap() {
+                map.invalidateSize();
+                map.fitBounds([[1.2, 25.4], [-12.4, 41.3]], { padding: [10, 10] });
             }
-            setTimeout(function () { map.invalidateSize(); }, 150);
+            frameMap();
+            if (latestAt) render(latestPlanes, latestAt, latestNotice);
+            setTimeout(frameMap, 200);
         }).catch(function () {
-            /* Sans contour, les vols restent affichés et classés « à proximité ». */
+            /* Sans contour, les vols restent affichés et classés « Région ». */
         });
     }
 
@@ -515,8 +665,10 @@
         }).catch(function () {
             var cached = readCache();
             if (cached) {
-                render(tagZones(cached.planes), new Date(cached.savedAt), t("error") + " " + t("cached"));
+                render(cached.planes, new Date(cached.savedAt), t("error") + " " + t("cached"));
             } else {
+                latestAt = null;
+                latestNotice = "";
                 countEl.textContent = t("error");
                 boardEl.innerHTML = "";
                 drawPlanes([]);
@@ -550,7 +702,7 @@
         if (started) return;
         started = true;
         var cached = readCache();
-        if (cached) render(tagZones(cached.planes), new Date(cached.savedAt));
+        if (cached) render(cached.planes, new Date(cached.savedAt));
         else countEl.textContent = t("loading");
         bootMap();
         refresh();
@@ -564,6 +716,17 @@
         button.addEventListener("click", function () {
             setLang(button.getAttribute("data-set-lang"));
         });
+    });
+    root.addEventListener("click", function (event) {
+        var node = event.target;
+        while (node && node !== root) {
+            if (node.getAttribute && node.hasAttribute("data-filter")) {
+                filter = node.getAttribute("data-filter") || "all";
+                if (latestAt) render(latestPlanes, latestAt, latestNotice);
+                return;
+            }
+            node = node.parentNode;
+        }
     });
 
     if (refreshBtn) refreshBtn.addEventListener("click", function () { start(); refresh(); });

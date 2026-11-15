@@ -30,10 +30,10 @@
             <div class="section-head">
                 <p class="kicker" data-flights-text="kicker">Ciel en direct</p>
                 <h2 data-flights-text="title">Avions au-dessus du Burundi</h2>
-                <p class="section-intro" data-flights-text="intro">Les appareils détectés au-dessus du pays et dans ses environs. Le ciel se rafraîchit chaque minute.</p>
+                <p class="section-intro" data-flights-text="intro">Le ciel du Burundi, du Rwanda, de la Tanzanie et de l'est de la RDC. Il se rafraîchit chaque minute.</p>
             </div>
             <div class="flights-bar">
-                <p class="flights-count" data-flights-count aria-live="polite">Recherche des avions au-dessus du Burundi…</p>
+                <p class="flights-count" data-flights-count aria-live="polite">Recherche des avions dans la région…</p>
                 <button class="btn btn-ghost flights-refresh" type="button" data-flights-refresh>Actualiser</button>
             </div>
             <div class="flights-map-wrap">
@@ -41,9 +41,12 @@
                 <p class="flights-map-pending" data-flights-map-status>La carte se charge…</p>
             </div>
             <p class="flights-legend">
-                <span><i aria-hidden="true"></i><span data-flights-legend-over>Au-dessus du Burundi</span></span>
-                <span><i class="is-near" aria-hidden="true"></i><span data-flights-legend-near>À proximité</span></span>
+                <span><i data-swatch="bdi" aria-hidden="true"></i>Burundi</span>
+                <span><i data-swatch="rwa" aria-hidden="true"></i>Rwanda</span>
+                <span><i data-swatch="tza" aria-hidden="true"></i>Tanzanie</span>
+                <span><i data-swatch="cod" aria-hidden="true"></i>RDC</span>
             </p>
+            <div class="flights-filters" data-flights-filters role="tablist"></div>
             <div data-flights-board></div>
             <p class="flights-credit" data-flights-credit>Données : adsb.lol / OpenSky Network · Réalisé par EGOTEK</p>
         </section>
