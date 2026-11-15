@@ -2,8 +2,8 @@
    Aucune clé, aucun serveur : les deux sources sont appelées depuis le navigateur.
    Les textes vivent dans TEXTS (fr, en, rn) pour une traduction ultérieure. */
 (function () {
-    var ADSB_URL = "https://api.adsb.lol/v2/point/-3.38/29.92/250";
-    var OPENSKY_URL = "https://opensky-network.org/api/states/all?lamin=-4.6&lomin=28.8&lamax=-2.2&lomax=31.0";
+    var ADSB_URL = "/api/adsb/v2/point/-3.38/29.92/250";
+    var OPENSKY_URL = "/api/opensky/states/all?lamin=-4.6&lomin=28.8&lamax=-2.2&lomax=31.0";
     var CACHE_KEY = "am-flights-cache";
     var REFRESH_MS = 60000;
     var GEOJSON_URL = "data/burundi.geojson";

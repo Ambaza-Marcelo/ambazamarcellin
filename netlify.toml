@@ -1,0 +1,11 @@
+[[redirects]]
+  from = "/api/adsb/*"
+  to = "https://api.adsb.lol/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/opensky/*"
+  to = "https://opensky-network.org/api/:splat"
+  status = 200
+  force = true
