@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Avions au-dessus du Burundi — Ambaza Marcellin</title>
+    <meta name="description" content="Avions détectés en direct au-dessus du Burundi et dans ses environs.">
+    <meta name="theme-color" content="#0B0906">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230B0906'/%3E%3Ctext x='16' y='21' text-anchor='middle' font-family='Georgia,serif' font-size='13' fill='%23D4AF37'%3EAM%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/quiet-luxury.css">
+    <link rel="stylesheet" href="flights.css">
+</head>
+<body data-flights-page>
+    <header class="site-header">
+        <a class="brand" href="index.html">
+            <span class="brand-mark" aria-hidden="true">AM</span>
+            <span class="brand-name">Ambaza Marcellin</span>
+        </a>
+        <div class="lang" role="group" aria-label="Choisir la langue">
+            <button type="button" data-set-lang="fr" aria-pressed="true">FR</button>
+            <span aria-hidden="true">/</span>
+            <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+        </div>
+    </header>
+    <main id="contenu">
+        <section class="section flights" id="vols" data-flights>
+            <div class="section-head">
+                <p class="kicker" data-flights-text="kicker">Ciel en direct</p>
+                <h2 data-flights-text="title">Avions au-dessus du Burundi</h2>
+                <p class="section-intro" data-flights-text="intro">Les appareils détectés au-dessus du pays et dans ses environs. Le ciel se rafraîchit chaque minute.</p>
+            </div>
+            <div class="flights-bar">
+                <p class="flights-count" data-flights-count aria-live="polite">Recherche des avions au-dessus du Burundi…</p>
+                <button class="btn btn-ghost flights-refresh" type="button" data-flights-refresh>Actualiser</button>
+            </div>
+            <div class="flights-map-wrap">
+                <div class="flights-map" data-flights-map role="region" aria-label="Avions au-dessus du Burundi"></div>
+                <p class="flights-map-pending" data-flights-map-status>La carte se charge…</p>
+            </div>
+            <p class="flights-legend">
+                <span><i aria-hidden="true"></i><span data-flights-legend-over>Au-dessus du Burundi</span></span>
+                <span><i class="is-near" aria-hidden="true"></i><span data-flights-legend-near>À proximité</span></span>
+            </p>
+            <div data-flights-board></div>
+            <p class="flights-credit" data-flights-credit>Données : adsb.lol / OpenSky Network · Réalisé par EGOTEK</p>
+        </section>
+    </main>
+    <script src="flights.js"></script>
+</body>
+</html>
